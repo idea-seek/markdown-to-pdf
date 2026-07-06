@@ -335,7 +335,14 @@ onRouteChange((config: RouteConfig) => {
   navEl.querySelectorAll('a').forEach((a) => {
     const href = a.getAttribute('href') || '';
     const currentPath = config.path.replace(/\/$/, '') || '/';
-    const linkPath = href.replace(/\/$/, '') || '/';
+    // Extract pathname from full URL (e.g. https://markdown-to-pdf.ideaseek.cn/ → /)
+    let linkPath: string;
+    try {
+      linkPath = new URL(href).pathname;
+    } catch {
+      linkPath = href;
+    }
+    linkPath = linkPath.replace(/\/$/, '') || '/';
     a.classList.toggle('active', linkPath === currentPath);
   });
   // Update format label and description
