@@ -349,7 +349,7 @@ onRouteChange((config: RouteConfig) => {
   formatLabelEl.textContent = config.formatLabel;
   formatDescEl.textContent = config.formatDesc;
   exportBtnText.textContent = config.id === 'home'
-    ? '导出 HTML'
+    ? '导出 PDF'
     : `导出 ${config.label.replace('转 ', '')}`;
   // Update SEO meta tags
   updateMeta(config);
