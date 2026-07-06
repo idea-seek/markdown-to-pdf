@@ -1,66 +1,138 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MarkdownToPDF
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+免费在线 Markdown 多格式转换器，支持实时预览。将 Markdown 转换为 Word、PDF、HTML、图片。所有处理在浏览器本地完成，无需注册，无需安装。
 
-## About Laravel
+> **演示地址：** [https://markdown-to-pdf.ideaseek.cn/](https://markdown-to-pdf.ideaseek.cn/)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 品牌信息
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+本项目由 **ideaseek 智寻科技** 开发与维护。
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 功能特性
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Markdown → Word (.docx)** — 可编辑的 Word 文档，保留标题层级、表格、代码高亮、数学公式
+- **Markdown → PDF** — 浏览器打印为 PDF，A4 排版
+- **Markdown → HTML** — 完整 HTML 文档或代码片段导出
+- **Markdown → 图片** — PNG/JPG/WebP 高清图片，2x 像素密度
+- **实时预览** — 150ms 防抖，边写边看
+- **代码语法高亮** — 190+ 编程语言，highlight.js
+- **LaTeX 数学公式** — KaTeX 渲染
+- **100% 本地处理** — 所有转换在浏览器本地完成，数据不上传服务器
+- **完全免费** — 无需注册，无使用次数限制
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 技术栈
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| 功能 | 方案 |
+|---|---|
+| Markdown 解析 | `marked` + `marked-highlight` |
+| 代码语法高亮 | `highlight.js` (190+ 语言) |
+| LaTeX 公式 | `KaTeX` |
+| Word 导出 | `docx` (HTML AST → DOCX 原生结构) |
+| PDF 导出 | 浏览器 Print API |
+| 图片导出 | `html-to-image` (PNG/JPG/WebP/SVG) |
+| 路由 | History API (SPA) |
+| 构建工具 | Vite + TypeScript |
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## 项目结构
 
-## Contributing
+```
+ideasee-mdtopdf/
+├── index.html                  # 主页面 (完整 UI)
+├── public/
+│   └── images/
+│       ├── logo.png            # Logo
+│       └── favicon.ico         # Favicon
+├── src/
+│   ├── main.ts                 # 应用入口 + 事件处理 + 状态管理
+│   ├── router.ts               # 轻量 History API 路由器
+│   └── core/
+│       ├── parseMarkdown.ts    # Markdown → HTML
+│       ├── renderMath.ts       # LaTeX 数学公式
+│       ├── exportPdf.ts        # PDF 导出
+│       ├── exportHtml.ts       # HTML 导出
+│       ├── exportImage.ts      # 图片导出
+│       └── exportDocx.ts       # Word 导出
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 快速开始
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+# 安装依赖
+npm install
 
-## Security Vulnerabilities
+# 开发模式
+npm run dev
+# → http://localhost:3000
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 生产构建
+npm run build
+
+# 预览生产构建
+npm run preview
+```
+
+---
+
+## 页面路由
+
+| 路由 | 页面 |
+|---|---|
+| `/` | Markdown 转 PDF（首页） |
+| `/markdown-to-word/` | Markdown 转 Word |
+| `/markdown-to-pdf/` | Markdown 转 PDF |
+| `/markdown-to-html/` | Markdown 转 HTML |
+| `/markdown-to-image/` | Markdown 转图片 |
+
+---
+
+## 线上部署
+
+本项目为纯前端 SPA，构建产物在 `dist/` 目录。部署时需配置 SPA fallback（所有路由返回 `index.html`）。
+
+Nginx 示例：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name markdown-to-pdf.ideaseek.cn;
+
+    root /path/to/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+---
+
+## 隐私说明
+
+所有 Markdown 内容、上传文件和生成的文档仅在您的浏览器本地处理，**不会上传到任何服务器**。我们无法访问、查看或存储您的任何数据。
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License
+
+Copyright (c) 2026 ideaseek 智寻科技
