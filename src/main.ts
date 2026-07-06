@@ -111,7 +111,7 @@ $$
 
 ## 链接与图片
 
-访问 [MarkdownToPDF 官网](https://markdown-to-pdf.ideaseek.cn) 了解更多。
+访问 [Markdown-to-PDF 官网](https://markdown-to-pdf.ideaseek.cn) 了解更多。
 
 ---
 

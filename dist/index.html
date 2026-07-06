@@ -4,14 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="免费在线 Markdown 转换器，支持实时预览。将 Markdown 转换为 Word、PDF、HTML、图片。所有处理均在浏览器本地完成，无需注册。" />
-  <meta name="keywords" content="Markdown转Word,Markdown转PDF,Markdown转HTML,Markdown转图片,MDtoPDF,Markdown在线编辑器,MD转DOCX,Markdown导出" />
-  <meta name="author" content="MDtoPDF" />
+  <meta name="keywords" content="Markdown转Word,Markdown转PDF,Markdown转HTML,Markdown转图片,MarkdownToPDF,Markdown在线编辑器,MD转DOCX,Markdown导出" />
+  <meta name="author" content="ideaseek 智寻科技" />
   <meta name="robots" content="index, follow" />
-  <meta property="og:title" content="MDtoPDF - Markdown 转 Word / PDF / HTML / 图片" />
+  <meta property="og:title" content="Markdown 转 PDF - 免费在线转换工具" />
   <meta property="og:description" content="免费在线 Markdown 转换器，所有处理在浏览器本地完成，隐私安全。" />
   <meta property="og:type" content="website" />
-  <title>MDtoPDF - Markdown 转 Word / PDF / HTML / 图片 | 免费在线工具</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231671FA'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='18' font-family='sans-serif' font-weight='bold'>M</text></svg>" />
+  <title>Markdown 转 PDF - 免费在线转换工具</title>
+  <link data-n-head="ssr" rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+  <link rel="icon" type="image/png" href="/images/logo.png" />
   <style>
     /* ─── Reset & Base ─────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,10 +36,13 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      overflow: hidden;
+    }
+    /* App shell: header + toolbar + editor, takes full viewport */
+    .app-shell {
+      height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     /* ─── Header ───────────────────────────────── */
@@ -62,23 +66,36 @@
       font-weight: 700;
       text-decoration: none;
       user-select: none;
+      flex-shrink: 0;
     }
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--blue), var(--purple));
+    .logo-img {
+      height: 32px;
+      width: auto;
+      display: block;
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+    }
+    .nav a {
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 14px;
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 800;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .logo-text {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .nav a:hover { color: var(--blue); background: rgba(var(--blue-rgb), 0.06); }
+    .nav a.active {
+      color: var(--blue);
+      background: linear-gradient(135deg, rgba(var(--blue-rgb), 0.08), rgba(var(--purple-rgb), 0.08));
+      font-weight: 600;
     }
-    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .privacy-badge {
       display: flex; align-items: center; gap: 6px;
       padding: 5px 12px;
@@ -97,7 +114,7 @@
 
     /* ─── Toolbar ──────────────────────────────── */
     .toolbar {
-      height: 44px;
+      min-height: 44px;
       padding: 0 24px;
       display: flex;
       align-items: center;
@@ -106,6 +123,26 @@
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       flex-wrap: wrap;
+    }
+    .format-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex: 1;
+      min-width: 0;
+      padding-right: 12px;
+    }
+    .format-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .format-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -127,7 +164,7 @@
       color: #fff;
       border: none;
       font-weight: 600;
-      padding: 7px 16px;
+      padding: 8px 20px;
       position: relative;
     }
     .btn-primary:hover {
@@ -135,73 +172,21 @@
       transform: translateY(-1px);
       box-shadow: 0 4px 16px rgba(22, 113, 250, 0.3);
     }
-    .export-menu {
-      position: relative;
-      display: inline-block;
-    }
-    .export-dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: 6px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-      min-width: 200px;
-      padding: 6px;
-      z-index: 100;
-      animation: fadeIn 0.15s ease;
-    }
-    .export-dropdown.open { display: block; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-    .export-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      color: var(--text);
-      cursor: pointer;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
-      transition: background 0.15s;
-    }
-    .export-item:hover { background: rgba(var(--blue-rgb), 0.06); }
-    .export-item .icon-wrap {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-    .export-item .info { flex:1; }
-    .export-item .info .name { font-weight: 600; font-size: 13px; }
-    .export-item .info .desc { font-size: 11px; color: var(--text-secondary); }
-    .export-group-label {
-      font-size: 11px;
-      color: var(--text-secondary);
-      padding: 6px 14px 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
     .toolbar-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
 
     /* ─── Main content ─────────────────────────── */
     .main {
       flex: 1;
+      min-height: 0;
       display: flex;
       overflow: hidden;
       background: #fff;
     }
     .pane {
       flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
       min-width: 0;
     }
     .pane-header {
@@ -228,8 +213,8 @@
 
     .editor-wrap {
       flex: 1;
+      min-height: 0;
       display: flex;
-      overflow: hidden;
       position: relative;
     }
     .line-numbers {
@@ -250,6 +235,7 @@
 
     #editor {
       flex: 1;
+      min-height: 0;
       border: none;
       outline: none;
       resize: none;
@@ -306,6 +292,7 @@
     /* ─── Preview ──────────────────────────────── */
     .preview {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
       padding: 20px 28px;
     }
@@ -428,12 +415,196 @@
 
     /* ─── Responsive ───────────────────────────── */
     @media (max-width: 768px) {
+      .app-shell { height: auto; overflow: visible; }
+
+      /* Header - allow wrapping on mobile */
+      .header {
+        height: auto;
+        min-height: 48px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        gap: 6px;
+      }
+      .logo { font-size: 15px; }
+      .logo-img { height: 24px; }
+      .privacy-badge { font-size: 10px; padding: 3px 8px; }
+
+      /* Nav - full width scrollable row below logo */
+      .nav {
+        width: 100%;
+        order: 3;
+        padding: 2px 0;
+      }
+      .nav a {
+        padding: 4px 10px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+
       .main { flex-direction: column; }
       .pane-divider { display: none; }
       .pane { max-height: 50vh; }
       .toolbar { padding: 0 12px; gap: 4px; }
+      .toolbar .format-info { display: none; }
       .toolbar-divider { display: none; }
       .btn { padding: 5px 10px; font-size: 12px; }
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .page-section {
+        padding: 48px 16px;
+      }
+      .section-title { font-size: 24px; }
+    }
+
+    /* ─── Page Sections ──────────────────────────── */
+    .page-section {
+      padding: 80px 24px;
+      background: #fff;
+    }
+    .faq-section {
+      background: var(--bg);
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-bottom: 48px;
+      line-height: 1.6;
+    }
+    .faq-label {
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 8px;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* Feature cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      border-color: var(--blue);
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, rgba(var(--blue-rgb), 0.08), rgba(var(--purple-rgb), 0.08));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feature-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .feature-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* FAQ */
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .faq-item {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .faq-item[open] {
+      border-color: rgba(var(--blue-rgb), 0.3);
+      box-shadow: 0 2px 12px rgba(var(--blue-rgb), 0.04);
+    }
+    .faq-item summary {
+      padding: 18px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+';
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--text-secondary);
+      transition: transform 0.25s;
+    }
+    .faq-item[open] summary::after {
+      transform: rotate(45deg);
+    }
+    .faq-body {
+      padding: 0 24px 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .faq-body p { margin-bottom: 10px; }
+    .faq-body p:last-child { margin-bottom: 0; }
+    .faq-body ul { padding-left: 20px; margin-bottom: 10px; }
+    .faq-body ul li { margin-bottom: 4px; }
+    .faq-body strong { color: var(--text); }
+
+    /* ─── Site Footer ───────────────────────────── */
+    .site-footer {
+      padding: 20px 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: #fff;
+      border-top: 1px solid var(--border);
+    }
+    .site-footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    .site-footer a:hover {
+      color: var(--blue);
     }
 
     /* ─── Scrollbar ────────────────────────────── */
@@ -442,28 +613,44 @@
     ::-webkit-scrollbar-thumb { background: #d0d5e0; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #b0b8c8; }
   </style>
-  <script type="module" crossorigin src="/assets/index-DpNJwPQM.js"></script>
+  <script type="module" crossorigin src="/assets/index-pT3_mCur.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/highlight-BLBngcbI.js">
   <link rel="modulepreload" crossorigin href="/assets/docx-DXhDcaDh.js">
   <link rel="stylesheet" crossorigin href="/assets/index-Gc3nBxaK.css">
 </head>
 <body>
+  <div class="app-shell">
+
   <!-- Header -->
   <header class="header">
-    <div class="logo">
-      <div class="logo-icon">M</div>
-      <span class="logo-text">MDtoPDF</span>
-    </div>
+    <a href="/" class="logo" id="logo-link">
+      <img src="/images/logo.png" alt="MarkdownToPDF" class="logo-img" />
+    </a>
+    <nav class="nav" id="main-nav">
+      <a href="https://markdown-to-pdf.ideaseek.cn/" class="active">Markdown 转 PDF</a>
+      <a href="/markdown-to-word/">Markdown 转 Word</a>
+      <a href="/markdown-to-html/">Markdown 转 HTML</a>
+      <a href="/markdown-to-image/">Markdown 转图片</a>
+    </nav>
     <div class="header-actions">
       <div class="privacy-badge">
         <span class="privacy-dot"></span>
-        本地处理 · 数据不上传
+        本地浏览器处理 · 数据安全
       </div>
     </div>
   </header>
 
-  <!-- Toolbar -->
+  <!-- Toolbar with format-specific export -->
   <div class="toolbar">
+    <div class="format-info">
+      <span class="format-label" id="format-label">选择导出格式</span>
+      <span class="format-desc" id="format-desc">支持 Word、PDF、HTML、PNG 等多种格式</span>
+    </div>
+    <button class="btn btn-primary" id="export-btn" title="导出文档">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="export-btn-text">导出</span>
+    </button>
+    <span class="toolbar-divider"></span>
     <button class="btn" id="sample-btn" title="加载示例文档">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       示例
@@ -472,47 +659,11 @@
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       清空
     </button>
-    <span class="toolbar-divider"></span>
     <button class="btn" id="upload-area-btn" title="上传 Markdown 文件">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       上传 .md
     </button>
     <input type="file" id="file-input" accept=".md,.markdown,.txt" hidden />
-    <span class="toolbar-divider"></span>
-    <div class="export-menu">
-      <button class="btn btn-primary" id="export-btn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        导出
-      </button>
-      <div class="export-dropdown" id="export-menu">
-        <div class="export-group-label">文档格式</div>
-        <button class="export-item" data-export="docx">
-          <span class="icon-wrap" style="background:rgba(22,113,250,.08);color:var(--blue)">W</span>
-          <span class="info"><div class="name">Word (.docx)</div><div class="desc">可编辑的 Word 文档</div></span>
-        </button>
-        <button class="export-item" data-export="pdf">
-          <span class="icon-wrap" style="background:rgba(239,68,68,.08);color:#ef4444">P</span>
-          <span class="info"><div class="name">PDF</div><div class="desc">浏览器打印 → 另存为 PDF</div></span>
-        </button>
-        <button class="export-item" data-export="html">
-          <span class="icon-wrap" style="background:rgba(234,88,12,.08);color:#ea580c">H</span>
-          <span class="info"><div class="name">HTML</div><div class="desc">完整 HTML 文档</div></span>
-        </button>
-        <div class="export-group-label" style="margin-top:4px">图片格式</div>
-        <button class="export-item" data-export="png">
-          <span class="icon-wrap" style="background:rgba(34,197,94,.08);color:#22c55e">P</span>
-          <span class="info"><div class="name">PNG 图片</div><div class="desc">高清 PNG，2x 像素密度</div></span>
-        </button>
-        <button class="export-item" data-export="jpg">
-          <span class="icon-wrap" style="background:rgba(245,158,11,.08);color:#f59e0b">J</span>
-          <span class="info"><div class="name">JPG 图片</div><div class="desc">压缩图片格式</div></span>
-        </button>
-        <button class="export-item" data-export="webp">
-          <span class="icon-wrap" style="background:rgba(99,102,241,.08);color:#6366f1">W</span>
-          <span class="info"><div class="name">WebP 图片</div><div class="desc">更小体积</div></span>
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- Main: Editor + Preview -->
@@ -560,8 +711,133 @@
     </div>
   </main>
 
+  </div><!-- /.app-shell -->
+
+  <!-- Why choose us -->
+  <section class="page-section">
+    <div class="container">
+      <h2 class="section-title">为什么选择我们这个 Markdown 转 PDF 工具？</h2>
+      <p class="section-subtitle">简单、快速、安全，把你的 Markdown 变成漂亮的 PDF 文档</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>20+ 专业模板</h3>
+          <p>提供商务、学术、极简、创意等多种精美模板，让你的文档瞬间变得专业。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>实时预览</h3>
+          <p>边写边看效果，下载前就能确认 PDF 排版是否满意。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <h3>代码高亮</h3>
+          <p>完美支持多种编程语言的语法高亮，开发者写文档的利器。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>100% 本地处理</h3>
+          <p>所有转换都在你的浏览器里完成，文件不会上传到任何服务器。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h7"/><circle cx="18" cy="18" r="3" fill="rgba(var(--blue-rgb), 0.15)"/><line x1="16" y1="16" x2="16" y2="20"/><line x1="18" y1="18" x2="18" y2="18"/></svg>
+          </div>
+          <h3>数学公式支持</h3>
+          <p>完整支持 LaTeX 数学公式，学术论文、技术文档轻松搞定。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--blue)" stroke-width="1.5"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg>
+          </div>
+          <h3>完全免费</h3>
+          <p>无限次使用，不需要注册，没有隐藏收费。打开就能用。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="page-section faq-section">
+    <div class="container">
+      <h2 class="section-title">常见问题</h2>
+      <p class="faq-label">FAQ</p>
+      <p class="section-subtitle">关于格式支持、隐私处理和使用方式，先把最常见的问题讲清楚。</p>
+      <div class="faq-list">
+        <details class="faq-item" open>
+          <summary>什么是 Markdown？为什么要使用它？</summary>
+          <div class="faq-body">
+            <p>Markdown 是一种轻量级标记语言，由 John Gruber 于 2004 年创建。它使用简洁的纯文本语法来编写格式化文档，无需复杂排版工具。</p>
+            <p>使用 Markdown 的优势：<strong>纯文本</strong>（任意编辑器可打开）、<strong>易学易用</strong>（几分钟上手）、<strong>格式统一</strong>（不会因工具不同而排版错乱）、<strong>版本友好</strong>（适合 Git 管理）。广泛应用于技术文档、博客写作、笔记和 README 文件。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>我的数据安全吗？你们会存储我的文件吗？</summary>
+          <div class="faq-body">
+            <p><strong>完全安全。</strong>Markdown-to-PDF 是一个纯前端应用，所有文件处理均在您的浏览器本地完成。我们使用 WebAssembly 和浏览器原生 API，您的 Markdown 内容、上传的文件和生成的文档<strong>从不会离开您的设备</strong>。我们无法访问、查看或存储您的任何数据。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Markdown 支持转成哪些文件格式？</summary>
+          <div class="faq-body">
+            <p><strong>输入格式：</strong>Markdown（.md / .markdown）、纯文本（.txt），也可以直接粘贴 Markdown 内容。</p>
+            <p><strong>输出格式：</strong>Word（.docx）、PDF、HTML（完整页面 / 代码片段）、图片（PNG / JPG / WebP）。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>我需要创建帐户或付费才能使用 Markdown-to-PDF 吗？</summary>
+          <div class="faq-body">
+            <p><strong>不需要。</strong>Markdown-to-PDF 完全免费，无需注册、无需登录、无需安装。核心转换功能永久免费，无使用次数限制，生成文档无水印。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>我可以在移动设备上使用 Markdown-to-PDF 吗？</summary>
+          <div class="faq-body">
+            <p><strong>可以。</strong>Markdown-to-PDF 采用响应式设计，支持在手机和平板电脑上使用。在移动设备上，您可以编辑 Markdown、实时预览并导出为各种格式。导出 PDF 功能在移动端使用浏览器内置的打印功能。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>首页可以直接上传 Word 或 PDF 吗？</summary>
+          <div class="faq-body">
+            <p>目前 Markdown-to-PDF 专注于 Markdown 到多格式的转换。我们只接受 Markdown（.md）或纯文本（.txt）作为输入格式。如果您需要将 Word 或 PDF 转换为 Markdown，可以关注我们后续的功能更新。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>是否支持代码高亮、表格和数学公式？</summary>
+          <div class="faq-body">
+            <p><strong>支持！</strong>Markdown-to-PDF 能够处理 Markdown 中的代码块（含语法高亮，覆盖 190+ 编程语言）、表格以及 LaTeX 数学公式。转换为 Word、PDF、HTML 和图片时均会保留这些格式。具体渲染效果可能因目标格式略有差异，建议使用实时预览确认。</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>哪些工具仍处于 Beta 阶段？</summary>
+          <div class="faq-body">
+            <p>以下功能目前处于 Beta 测试阶段，可能存在兼容性问题：</p>
+            <ul>
+              <li><strong>图片导出</strong> — 复杂排版的图片渲染可能有微小差异</li>
+              <li><strong>数学公式转 Word</strong> — 部分复杂 LaTeX 公式在 .docx 中的渲染效果与预览可能不完全一致</li>
+            </ul>
+            <p>我们正在持续优化这些功能。如遇到问题，欢迎反馈。</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>&copy; 2026 <a href="https://www.ideaseek.cn/">ideaseek 智寻科技</a> <a href="https://markdown-to-pdf.ideaseek.cn">MarkdownToPDF</a>. All rights reserved.</p>
+  </footer>
 
 </body>
 </html>
