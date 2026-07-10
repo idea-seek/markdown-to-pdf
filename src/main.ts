@@ -136,6 +136,12 @@ const formatLabelEl = document.getElementById('format-label') as HTMLElement;
 const formatDescEl = document.getElementById('format-desc') as HTMLElement;
 const toastEl = document.getElementById('toast') as HTMLElement;
 const navEl = document.getElementById('main-nav') as HTMLElement;
+const pdfGuideOverlayEl = document.getElementById('pdf-guide-overlay') as HTMLElement;
+const pdfGuidePreviewEl = document.getElementById('pdf-guide-preview') as HTMLElement;
+const pdfGuideConfirmEl = document.getElementById('pdf-guide-confirm') as HTMLButtonElement;
+const pdfGuideCancelEl = document.getElementById('pdf-guide-cancel') as HTMLButtonElement;
+
+let pendingPdfTitle = 'document';
 
 // ─── Debounce utility ───────────────────────────────────────
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
@@ -209,6 +215,20 @@ function showToast(message: string) {
   }, 2500);
 }
 
+function openPdfGuide(title: string) {
+  pendingPdfTitle = title;
+  pdfGuidePreviewEl.innerHTML = previewEl.innerHTML;
+  pdfGuideOverlayEl.classList.add('open');
+  pdfGuideOverlayEl.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePdfGuide() {
+  pdfGuideOverlayEl.classList.remove('open');
+  pdfGuideOverlayEl.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
 // ─── File handling ──────────────────────────────────────────
 function loadFile(file: File) {
   if (!file.name.match(/\.(md|markdown|txt)$/i)) {
@@ -254,9 +274,7 @@ async function handleExport() {
 
       case 'home':
       case 'pdf':
-        showToast('正在生成 PDF 文件...');
-        await exportPdf(previewEl, title);
-        showToast('PDF 文件已下载');
+        openPdfGuide(title);
         break;
 
       case 'html':
@@ -381,6 +399,27 @@ document.getElementById('sample-btn')?.addEventListener('click', () => {
   showToast('已加载示例文档');
 });
 
+pdfGuideCancelEl.addEventListener('click', () => {
+  closePdfGuide();
+});
+
+pdfGuideConfirmEl.addEventListener('click', async () => {
+  try {
+    closePdfGuide();
+    showToast('正在打开打印窗口...');
+    await exportPdf(previewEl, pendingPdfTitle);
+  } catch (e) {
+    console.error('PDF print error:', e);
+    showToast('打开打印窗口失败，请重试');
+  }
+});
+
+pdfGuideOverlayEl.addEventListener('click', (e) => {
+  if (e.target === pdfGuideOverlayEl) {
+    closePdfGuide();
+  }
+});
+
 // Paste handler for the whole page
 document.addEventListener('paste', (e) => {
   // Only if editor is focused
@@ -397,6 +436,12 @@ document.addEventListener('paste', (e) => {
         break;
       }
     }
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && pdfGuideOverlayEl.classList.contains('open')) {
+    closePdfGuide();
   }
 });
 
