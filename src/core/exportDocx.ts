@@ -16,6 +16,7 @@ import {
   PageNumber,
 } from 'docx';
 import { saveAs } from 'file-saver';
+import { sanitizeFilename } from './fileName';
 
 interface ExportNode {
   type: 'heading' | 'paragraph' | 'codeBlock' | 'table' | 'blockquote' | 'list' | 'image' | 'math' | 'hr';
@@ -30,7 +31,7 @@ interface ExportNode {
   alt?: string;
   latex?: string;
   ordered?: boolean;
-  items?: any[][];
+  items?: InlineNode[][];
 }
 
 interface InlineNode {
@@ -70,6 +71,15 @@ function elementToNode(el: Element): ExportNode | null {
     case 'h5': return { type: 'heading', depth: 5, children: parseInline(el) };
     case 'h6': return { type: 'heading', depth: 6, children: parseInline(el) };
     case 'p': return { type: 'paragraph', children: parseInline(el) };
+    case 'img':
+      return {
+        type: 'paragraph',
+        children: [{
+          type: 'image',
+          src: el.getAttribute('src') || '',
+          alt: el.getAttribute('alt') || '',
+        }],
+      };
     case 'pre': {
       const codeEl = el.querySelector('code');
       const lang = codeEl?.className.match(/language-(\w+)/)?.[1] || 'text';
@@ -84,19 +94,19 @@ function elementToNode(el: Element): ExportNode | null {
       return { type: 'blockquote', children };
     }
     case 'ul': {
-      const items: ExportNode[][] = [];
+      const items: InlineNode[][] = [];
       for (const li of el.children) {
         if (li.tagName === 'LI') {
-          items.push([{ type: 'paragraph', children: parseInline(li) }]);
+          items.push(parseInline(li));
         }
       }
       return { type: 'list', ordered: false, items };
     }
     case 'ol': {
-      const items: ExportNode[][] = [];
+      const items: InlineNode[][] = [];
       for (const li of el.children) {
         if (li.tagName === 'LI') {
-          items.push([{ type: 'paragraph', children: parseInline(li) }]);
+          items.push(parseInline(li));
         }
       }
       return { type: 'list', ordered: true, items };
@@ -160,6 +170,11 @@ function parseInline(el: Element): InlineNode[] {
             src: elem.getAttribute('src') || '',
             alt: elem.getAttribute('alt') || '',
           });
+          break;
+        case 'input':
+          if ((elem as HTMLInputElement).type === 'checkbox') {
+            nodes.push({ type: 'text', content: (elem as HTMLInputElement).checked ? '☑ ' : '☐ ' });
+          }
           break;
         case 'span':
           if (elem.getAttribute('data-math') === 'inline') {
@@ -243,14 +258,15 @@ function buildTextRun(node: InlineNode): TextRun[] {
         }),
       ] as unknown as TextRun[];
     case 'image':
+      return [new TextRun({ text: node.alt?.trim() || '[图片]' })];
     case 'math':
-      return [new TextRun({ text: node.content || node.latex || '' })];
+      return [new TextRun({ text: node.content || node.latex || '[公式]' })];
     default:
       return [new TextRun({ text: node.content || '' })];
   }
 }
 
-function buildParagraph(children: InlineNode[]): Paragraph {
+function buildInlineChildren(children: InlineNode[]): (TextRun | ExternalHyperlink)[] {
   const runs: (TextRun | ExternalHyperlink)[] = [];
 
   for (const child of children) {
@@ -266,7 +282,24 @@ function buildParagraph(children: InlineNode[]): Paragraph {
     }
   }
 
-  return new Paragraph({ children: runs as any, spacing: { after: 120 } });
+  return runs;
+}
+
+function buildParagraph(children: InlineNode[], options?: { prefix?: string; indentLeft?: number; borderLeft?: boolean }): Paragraph {
+  const runs = buildInlineChildren(children);
+
+  if (options?.prefix) {
+    runs.unshift(new TextRun({ text: options.prefix }));
+  }
+
+  return new Paragraph({
+    children: runs as any,
+    spacing: { after: 120 },
+    indent: options?.indentLeft ? { left: options.indentLeft } : undefined,
+    border: options?.borderLeft
+      ? { left: { style: BorderStyle.SINGLE, color: 'A070FF', size: 4 } }
+      : undefined,
+  });
 }
 
 function buildHeading(depth: number, children: InlineNode[]): Paragraph {
@@ -281,7 +314,7 @@ function buildHeading(depth: number, children: InlineNode[]): Paragraph {
 
   return new Paragraph({
     heading: headingMap[depth] || HeadingLevel.HEADING_1,
-    children: children.map((c) => new TextRun({ text: c.content || '', bold: true })),
+    children: buildInlineChildren(children) as any,
     spacing: { before: 240, after: 120 },
   });
 }
@@ -345,18 +378,30 @@ function buildTable(node: ExportNode): Table {
   });
 }
 
-function buildBlockquote(node: ExportNode): Paragraph {
+function buildBlockquote(node: ExportNode): Paragraph[] {
   const children = node.children || [];
-  const textParts: string[] = [];
-  for (const child of children) {
-    textParts.push(child.content || (child.children?.[0]?.content) || '');
-  }
-  return new Paragraph({
-    children: [new TextRun({ text: textParts.join('\n'), italics: true, color: '6B7280' })],
-    indent: { left: 400 },
-    spacing: { after: 120 },
-    border: { left: { style: BorderStyle.SINGLE, color: 'A070FF', size: 4 } },
+  const paragraphs = children.flatMap((child) => {
+    if (child.type === 'paragraph' || child.type === 'heading') {
+      return [buildParagraph(child.children || [{ type: 'text', content: '' }], { indentLeft: 400, borderLeft: true })];
+    }
+
+    if (child.type === 'list') {
+      const items = child.items || [];
+      return items.map((item: InlineNode[], index: number) =>
+        buildParagraph(item, {
+          prefix: child.ordered ? `${index + 1}. ` : '• ',
+          indentLeft: 400,
+          borderLeft: true,
+        })
+      );
+    }
+
+    return [buildParagraph([{ type: 'text', content: child.content || child.latex || '' }], { indentLeft: 400, borderLeft: true })];
   });
+
+  return paragraphs.length > 0
+    ? paragraphs
+    : [buildParagraph([{ type: 'text', content: '' }], { indentLeft: 400, borderLeft: true })];
 }
 
 function buildList(node: ExportNode): Paragraph[] {
@@ -364,14 +409,7 @@ function buildList(node: ExportNode): Paragraph[] {
   const items = node.items || [];
   for (let i = 0; i < items.length; i++) {
     const prefix = node.ordered ? `${i + 1}. ` : '• ';
-    const text = items[i].map((n) => n.content || '').join('');
-    result.push(
-      new Paragraph({
-        children: [new TextRun({ text: prefix + text })],
-        indent: { left: 400 },
-        spacing: { after: 60 },
-      })
-    );
+    result.push(buildParagraph(items[i], { prefix, indentLeft: 400 }));
   }
   return result;
 }
@@ -405,6 +443,7 @@ function nodeToDocxParagraph(node: ExportNode): Paragraph | Paragraph[] {
 
 export async function exportToDocx(appElement: HTMLElement, filename: string = 'document.docx') {
   const nodes = htmlToNodes(appElement.innerHTML);
+  const safeFilename = sanitizeFilename(filename.replace(/\.docx$/i, ''));
 
   const docChildren: (Paragraph | Table)[] = [];
 
@@ -459,5 +498,5 @@ export async function exportToDocx(appElement: HTMLElement, filename: string = '
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, filename);
+  saveAs(blob, `${safeFilename}.docx`);
 }

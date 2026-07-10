@@ -173,6 +173,17 @@ async function updatePreview() {
   }
 }
 
+async function syncEditorState(text: string) {
+  state.markdown = text;
+  updateLineNumbers();
+
+  try {
+    localStorage.setItem('mdtopdf_draft', text);
+  } catch (_) {}
+
+  await updatePreview();
+}
+
 // ─── Sync scroll ────────────────────────────────────────────
 function syncScroll() {
   if (!editorEl || !previewEl) return;
@@ -182,13 +193,7 @@ function syncScroll() {
 
 // ─── Handle input ───────────────────────────────────────────
 function handleInput(text: string) {
-  state.markdown = text;
-  updateLineNumbers();
-  updatePreview();
-  // Save to localStorage
-  try {
-    localStorage.setItem('mdtopdf_draft', text);
-  } catch (_) {}
+  void syncEditorState(text);
 }
 
 const debouncedHandleInput = debounce(handleInput, 150);
@@ -227,10 +232,14 @@ function getTitle(): string {
 }
 
 async function handleExport() {
-  if (!state.markdown.trim()) {
+  const currentMarkdown = editorEl.value;
+
+  if (!currentMarkdown.trim()) {
     showToast('请先输入或上传 Markdown 内容');
     return;
   }
+
+  await syncEditorState(currentMarkdown);
 
   const title = getTitle();
   const route = state.currentRoute.id;
@@ -243,9 +252,10 @@ async function handleExport() {
         showToast('Word 文档已下载');
         break;
 
+      case 'home':
       case 'pdf':
-        showToast('正在准备打印，请在打印对话框中选择"另存为 PDF"...');
-        setTimeout(() => exportPdf(title), 300);
+        showToast('正在准备 PDF，请在打印对话框中选择"另存为 PDF"...');
+        await exportPdf(previewEl, title);
         break;
 
       case 'html':
@@ -261,9 +271,7 @@ async function handleExport() {
         break;
 
       default:
-        // Home page - default to HTML export
-        exportHtml(previewEl.innerHTML, title);
-        showToast('HTML 文件已下载');
+        showToast('暂不支持当前导出类型');
         break;
     }
   } catch (e) {
