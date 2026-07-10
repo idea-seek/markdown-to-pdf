@@ -254,8 +254,9 @@ async function handleExport() {
 
       case 'home':
       case 'pdf':
-        showToast('正在准备 PDF，请在打印对话框中选择"另存为 PDF"...');
+        showToast('正在生成 PDF 文件...');
         await exportPdf(previewEl, title);
+        showToast('PDF 文件已下载');
         break;
 
       case 'html':
