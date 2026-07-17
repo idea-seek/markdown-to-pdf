@@ -135,4 +135,4 @@ server {
 
 MIT License
 
-Copyright (c) 2026 ideaseek 智寻科技
+Copyright (c) 2026 ideaseek [珠海市智寻科技有限公司](https://www.ideaseek.cn)
